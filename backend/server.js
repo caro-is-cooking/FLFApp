@@ -40,39 +40,45 @@ function buildSystemPrompt(userContext) {
 
 // POST /chat - proxy to OpenAI; optional image for plate/calorie analysis (vision). Prompt is built on server.
 app.post('/chat', async (req, res) => {
-  if (!OPENAI_API_KEY) {
-    return res.status(500).json({ error: 'Server error. Please try again later.' });
-  }
-
-  const { messages, imageBase64, userContext } = req.body;
-  if (!Array.isArray(messages)) {
-    return res.status(400).json({ error: 'Invalid request.' });
-  }
-
-  const systemPrompt = buildSystemPrompt(userContext || {});
-
-  const openaiMessages = [
-    { role: 'system', content: systemPrompt },
-    ...messages.map((m, i) => {
-      const isLastUser = m.role === 'user' && i === messages.length - 1;
-      if (isLastUser && imageBase64 && typeof imageBase64 === 'string') {
-        const prefix = imageBase64.startsWith('data:') ? '' : 'data:image/jpeg;base64,';
-        return {
-          role: 'user',
-          content: [
-            { type: 'text', text: m.content || 'Here\'s my plate - can you estimate the calories and give me feedback?' },
-            { type: 'image_url', image_url: { url: prefix + imageBase64 } },
-          ],
-        };
-      }
-      return { role: m.role, content: m.content };
-    }),
-  ];
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  const sendError = (msg) => res.status(200).json({ reply: null, error: msg });
 
   try {
+    if (!OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is not set in Railway Variables. Add it in your service → Variables.');
+      return sendError('Something went wrong. Please try again later.');
+    }
+
+    const body = req.body || {};
+    const { messages, imageBase64, userContext } = body;
+    if (!Array.isArray(messages)) {
+      console.error('Invalid request: body keys', Object.keys(body), 'messages type', typeof messages);
+      return sendError('Backend received an invalid request. Check that the app is using the latest version.');
+    }
+
+    const systemPrompt = buildSystemPrompt(userContext || {});
+
+    const openaiMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map((m, i) => {
+        const isLastUser = m && m.role === 'user' && i === messages.length - 1;
+        const content = (m && m.content != null) ? String(m.content) : '';
+        if (isLastUser && imageBase64 && typeof imageBase64 === 'string') {
+          const prefix = imageBase64.startsWith('data:') ? '' : 'data:image/jpeg;base64,';
+          return {
+            role: 'user',
+            content: [
+              { type: 'text', text: content || 'Here\'s my plate - can you estimate the calories and give me feedback?' },
+              { type: 'image_url', image_url: { url: prefix + imageBase64 } },
+            ],
+          };
+        }
+        return { role: (m && m.role) || 'user', content };
+      }),
+    ];
+
+    const controller = new AbortController();
+    let timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       signal: controller.signal,
@@ -92,28 +98,32 @@ app.post('/chat', async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('OpenAI error:', data.error?.message || response.status);
-      return res.status(200).json({ reply: null, error: 'Something went wrong. Please try again later.' });
+      const openaiMsg = data.error?.message || data.error?.code || `HTTP ${response.status}`;
+      console.error('OpenAI API error:', response.status, openaiMsg);
+      return sendError(openaiMsg || 'Something went wrong. Please try again later.');
     }
 
     const reply = data.choices?.[0]?.message?.content?.trim();
     if (!reply) {
-      return res.status(200).json({ reply: null, error: 'Something went wrong. Please try again later.' });
+      console.error('OpenAI returned no reply:', JSON.stringify(data).slice(0, 200));
+      return sendError('Something went wrong. Please try again later.');
     }
 
     res.json({ reply });
   } catch (e) {
-    clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      return res.status(200).json({ reply: null, error: 'This is taking longer than usual. Please try again.' });
+      return sendError('This is taking longer than usual. Please try again.');
     }
-    console.error(e);
-    res.status(200).json({ reply: null, error: 'Something went wrong. Please try again later.' });
+    console.error('Chat endpoint error:', e);
+    return sendError('Something went wrong. Please try again later.');
   }
 });
 
 // Health check for hosting platforms
 app.get('/health', (_, res) => res.json({ ok: true }));
+
+// Debug: verify backend sees the API key (do not expose the key). Open in browser: https://your-app.up.railway.app/debug
+app.get('/debug', (_, res) => res.json({ ok: true, hasApiKey: !!OPENAI_API_KEY }));
 
 app.listen(PORT, () => {
   console.log(`FLF chat backend listening on port ${PORT}`);
