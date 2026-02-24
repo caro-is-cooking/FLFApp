@@ -1,0 +1,11 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# Backend (Node)
+node_modules/
+
+# Optional: uncomment to avoid committing any local API key in Secrets
+# FLFApp/FLFApp/Config/FLFAppConfig.Secrets.swift
