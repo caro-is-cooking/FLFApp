@@ -135,8 +135,9 @@ final class SupportChatService {
     }
     
     private func callBackend(url: URL, userMessage: String, appState: AppState, imageBase64: String? = nil) async -> String {
-        let recent = Array(appState.chatHistory.suffix(maxHistoryMessages))
-        var messages: [BackendMessage] = recent.map { msg in
+        // History already includes the current user message; use everything except the last so we don't send it twice.
+        let historyWithoutCurrent = Array(appState.chatHistory.dropLast().suffix(maxHistoryMessages))
+        var messages: [BackendMessage] = historyWithoutCurrent.map { msg in
             BackendMessage(role: msg.role == .user ? "user" : "assistant", content: msg.content)
         }
         messages.append(BackendMessage(role: "user", content: userMessage))

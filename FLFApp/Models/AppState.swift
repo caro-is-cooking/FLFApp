@@ -7,7 +7,10 @@ final class AppState: ObservableObject {
     @Published var dailyLogs: [String: DailyLog] = [:]
     @Published var chatHistory: [ChatMessage] = []
     @Published var userChallenges: [String] = []  // things user finds challenging, for chat context
-    
+    @Published var foodEntries: [FoodEntry] = []
+    @Published var userAddedFoods: [UserAddedFood] = []
+    @Published var appliedFoodLogSuggestions: Set<String> = []
+
     private let store = DataStore()
     private var cancellables = Set<AnyCancellable>()
     
@@ -73,20 +76,92 @@ final class AppState: ObservableObject {
             save()
         }
     }
-    
+
+    func addFoodEntry(_ entry: FoodEntry) {
+        foodEntries.append(entry)
+        save()
+    }
+
+    func removeFoodEntry(id: String) {
+        foodEntries.removeAll { $0.id == id }
+        save()
+    }
+
+    func addUserAddedFood(_ food: UserAddedFood) {
+        if !userAddedFoods.contains(where: { $0.id == food.id }) {
+            userAddedFoods.append(food)
+            save()
+        }
+    }
+
+    func removeUserAddedFood(id: String) {
+        userAddedFoods.removeAll { $0.id == id }
+        save()
+    }
+
+    func foodEntries(for dateKey: String) -> [FoodEntry] {
+        foodEntries.filter { $0.dateKey == dateKey }
+    }
+
+    /// Totals for a given day from food tracker.
+    func foodTotals(for dateKey: String) -> (calories: Double, protein: Double) {
+        let entries = foodEntries(for: dateKey)
+        let cal = entries.map(\.calories).reduce(0, +)
+        let protein = entries.map(\.proteinGrams).reduce(0, +)
+        return (cal, protein)
+    }
+
+    /// Write today's food tracker totals into the daily log (Overview). Preserves steps and weight; overwrites calories and protein.
+    func syncTodayFoodToOverview() {
+        let todayKey = DailyLog.dateKey(from: Date())
+        let (cal, protein) = foodTotals(for: todayKey)
+        var log = dailyLogs[todayKey] ?? DailyLog(dateKey: todayKey, isManualOverride: false)
+        log.caloriesConsumed = cal > 0 ? cal : nil
+        log.proteinGrams = protein > 0 ? protein : nil
+        log.isManualOverride = false
+        dailyLogs[todayKey] = log
+        save()
+    }
+
+    /// Key for a single suggested food item (messageId + index) so we don't add twice.
+    func foodLogSuggestionKey(messageId: String, itemIndex: Int) -> String {
+        "\(messageId)-\(itemIndex)"
+    }
+
+    func isFoodLogSuggestionApplied(messageId: String, itemIndex: Int) -> Bool {
+        appliedFoodLogSuggestions.contains(foodLogSuggestionKey(messageId: messageId, itemIndex: itemIndex))
+    }
+
+    /// Add one suggested food item to today's food log and mark it as applied.
+    func applyFoodLogSuggestion(messageId: String, itemIndex: Int, name: String, calories: Double, protein: Double, quantity: String) {
+        let key = foodLogSuggestionKey(messageId: messageId, itemIndex: itemIndex)
+        guard !appliedFoodLogSuggestions.contains(key) else { return }
+        let todayKey = DailyLog.dateKey(from: Date())
+        let displayName = quantity.isEmpty ? name : "\(name) (\(quantity))"
+        let entry = FoodEntry(dateKey: todayKey, name: displayName, calories: calories, proteinGrams: protein)
+        addFoodEntry(entry)
+        appliedFoodLogSuggestions.insert(key)
+        store.saveAppliedFoodLogSuggestions(Array(appliedFoodLogSuggestions))
+    }
+
     private func load() {
         goals = store.loadGoals()
         hasCompletedOnboarding = store.loadOnboardingComplete()
         dailyLogs = store.loadDailyLogs()
         chatHistory = store.loadChatHistory()
         userChallenges = store.loadUserChallenges()
+        foodEntries = store.loadFoodEntries()
+        userAddedFoods = store.loadUserAddedFoods()
+        appliedFoodLogSuggestions = Set(store.loadAppliedFoodLogSuggestions())
     }
-    
+
     private func save() {
         if let g = goals { store.saveGoals(g) }
         store.saveOnboardingComplete(hasCompletedOnboarding)
         store.saveDailyLogs(dailyLogs)
         store.saveChatHistory(chatHistory)
         store.saveUserChallenges(userChallenges)
+        store.saveFoodEntries(foodEntries)
+        store.saveUserAddedFoods(userAddedFoods)
     }
 }

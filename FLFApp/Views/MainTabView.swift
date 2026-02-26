@@ -9,14 +9,18 @@ struct MainTabView: View {
             OverviewView()
                 .tabItem { Label("Overview", systemImage: "chart.xyaxis.line") }
                 .tag(0)
-            
+
+            FoodTrackerView()
+                .tabItem { Label("Food", systemImage: "fork.knife") }
+                .tag(1)
+
             WeighInView()
                 .tabItem { Label("Weigh In", systemImage: "scalemass.fill") }
-                .tag(1)
-            
+                .tag(2)
+
             SupportChatView()
                 .tabItem { Label("Support", systemImage: "bubble.left.and.bubble.right.fill") }
-                .tag(2)
+                .tag(3)
         }
     }
 }

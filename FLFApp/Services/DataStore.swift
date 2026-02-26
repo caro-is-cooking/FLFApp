@@ -51,7 +51,31 @@ final class DataStore {
     func loadUserChallenges() -> [String] {
         load(from: "user_challenges.json") ?? []
     }
-    
+
+    func saveFoodEntries(_ entries: [FoodEntry]) {
+        save(entries, to: "food_entries.json")
+    }
+
+    func loadFoodEntries() -> [FoodEntry] {
+        load(from: "food_entries.json") ?? []
+    }
+
+    func saveUserAddedFoods(_ foods: [UserAddedFood]) {
+        save(foods, to: "user_added_foods.json")
+    }
+
+    func loadUserAddedFoods() -> [UserAddedFood] {
+        load(from: "user_added_foods.json") ?? []
+    }
+
+    func saveAppliedFoodLogSuggestions(_ keys: [String]) {
+        save(keys, to: "applied_food_log_suggestions.json")
+    }
+
+    func loadAppliedFoodLogSuggestions() -> [String] {
+        load(from: "applied_food_log_suggestions.json") ?? []
+    }
+
     func saveOpenAIAPIKey(_ key: String?) {
         let trimmed = key?.trimmingCharacters(in: .whitespacesAndNewlines)
         UserDefaults.standard.set(trimmed?.isEmpty == true ? nil : trimmed, forKey: "flf_openai_api_key")

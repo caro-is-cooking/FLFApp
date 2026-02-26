@@ -4,18 +4,21 @@ struct LogEditorView: View {
     let log: DailyLog
     let onSave: (DailyLog) -> Void
     let onCancel: () -> Void
-    
+
     @EnvironmentObject var appState: AppState
-    @State private var caloriesText: String = ""
-    @State private var proteinText: String = ""
-    @State private var stepsText: String = ""
-    
+    @State private var caloriesText: String
+    @State private var proteinText: String
+    @State private var stepsText: String
+
     init(log: DailyLog, onSave: @escaping (DailyLog) -> Void, onCancel: @escaping () -> Void) {
         self.log = log
         self.onSave = onSave
         self.onCancel = onCancel
+        _caloriesText = State(initialValue: log.caloriesConsumed.map { "\(Int($0))" } ?? "")
+        _proteinText = State(initialValue: log.proteinGrams.map { String(format: "%.0f", $0) } ?? "")
+        _stepsText = State(initialValue: log.stepCount.map { "\($0)" } ?? "")
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -41,11 +44,6 @@ struct LogEditorView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
                 }
-            }
-            .onAppear {
-                caloriesText = log.caloriesConsumed.map { "\(Int($0))" } ?? ""
-                proteinText = log.proteinGrams.map { String(format: "%.0f", $0) } ?? ""
-                stepsText = log.stepCount.map { "\($0)" } ?? ""
             }
         }
     }

@@ -7,7 +7,7 @@ enum FLFAppConfig {
 
     /// Your deployed backend URL. Set this once; the app uses it for all chat and plate-photo analysis. No trailing slash.
     /// Example: "https://your-flf-backend.railway.app"
-    static var defaultBackendURL: String? = nil
+    static var defaultBackendURL: String? = "https://flfapp-production.up.railway.app"
 
     /// Only used for direct OpenAI when no backend is set (e.g. local dev). Prefer backend for production.
     static var defaultOpenAIAPIKey: String? {

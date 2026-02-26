@@ -24,6 +24,12 @@
 		A100000F /* EditGoalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000F /* EditGoalView.swift */; };
 		A1000011 /* FLFAppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011 /* FLFAppConfig.swift */; };
 		A1000012 /* FLFAppConfig.Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012 /* FLFAppConfig.Secrets.swift */; };
+		A1000013 /* FoodEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* FoodEntry.swift */; };
+		A1000014 /* CommonFoods.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000014 /* CommonFoods.swift */; };
+		A1000015 /* FoodTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015 /* FoodTrackerView.swift */; };
+		A1000016 /* AddFoodView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016 /* AddFoodView.swift */; };
+		A1000017 /* FoodItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017 /* FoodItem.swift */; };
+		A1000018 /* UserAddedFood.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000018 /* UserAddedFood.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +50,12 @@
 		A200000F /* EditGoalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditGoalView.swift; sourceTree = "<group>"; };
 		A2000011 /* FLFAppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLFAppConfig.swift; sourceTree = "<group>"; };
 		A2000012 /* FLFAppConfig.Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FLFAppConfig.Secrets.swift"; sourceTree = "<group>"; };
+		A2000013 /* FoodEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodEntry.swift; sourceTree = "<group>"; };
+		A2000014 /* CommonFoods.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonFoods.swift; sourceTree = "<group>"; };
+		A2000015 /* FoodTrackerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodTrackerView.swift; sourceTree = "<group>"; };
+		A2000016 /* AddFoodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddFoodView.swift; sourceTree = "<group>"; };
+		A2000017 /* FoodItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodItem.swift; sourceTree = "<group>"; };
+		A2000018 /* UserAddedFood.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAddedFood.swift; sourceTree = "<group>"; };
 		A3000001 /* FLFApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FLFApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -106,6 +118,8 @@
 				A2000006 /* WeighInView.swift */,
 				A2000007 /* SupportChatView.swift */,
 				A200000F /* EditGoalView.swift */,
+				A2000015 /* FoodTrackerView.swift */,
+				A2000016 /* AddFoodView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -117,6 +131,10 @@
 				A2000009 /* DailyLog.swift */,
 				A200000A /* ChatMessage.swift */,
 				A200000B /* AppState.swift */,
+				A2000013 /* FoodEntry.swift */,
+				A2000014 /* CommonFoods.swift */,
+				A2000017 /* FoodItem.swift */,
+				A2000018 /* UserAddedFood.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -211,6 +229,12 @@
 				A100000F /* EditGoalView.swift in Sources */,
 				A1000011 /* FLFAppConfig.swift in Sources */,
 				A1000012 /* FLFAppConfig.Secrets.swift in Sources */,
+				A1000013 /* FoodEntry.swift in Sources */,
+				A1000014 /* CommonFoods.swift in Sources */,
+				A1000015 /* FoodTrackerView.swift in Sources */,
+				A1000016 /* AddFoodView.swift in Sources */,
+				A1000017 /* FoodItem.swift in Sources */,
+				A1000018 /* UserAddedFood.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
