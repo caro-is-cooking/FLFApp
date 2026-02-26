@@ -44,6 +44,28 @@ final class DataStore {
         load(from: "chat_history.json") ?? []
     }
     
+    private var chatImagesURL: URL {
+        let dir = docsURL.appendingPathComponent("ChatImages", isDirectory: true)
+        if !fileManager.fileExists(atPath: dir.path) {
+            try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir
+    }
+    
+    /// Saves chat image data; returns relative path to store on ChatMessage (e.g. "ChatImages/<id>.jpg").
+    func saveChatImage(id: UUID, jpegData: Data) -> String {
+        let name = "\(id.uuidString).jpg"
+        let url = chatImagesURL.appendingPathComponent(name)
+        try? jpegData.write(to: url)
+        return "ChatImages/\(name)"
+    }
+    
+    /// Loads chat image data for a message attachment path.
+    func loadChatImageData(relativePath: String) -> Data? {
+        let url = docsURL.appendingPathComponent(relativePath)
+        return try? Data(contentsOf: url)
+    }
+    
     func saveUserChallenges(_ challenges: [String]) {
         save(challenges, to: "user_challenges.json")
     }

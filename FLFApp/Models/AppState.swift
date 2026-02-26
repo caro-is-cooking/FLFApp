@@ -70,6 +70,16 @@ final class AppState: ObservableObject {
         save()
     }
     
+    /// Saves a chat image and returns the relative path to store on the message.
+    func saveChatImage(id: UUID, jpegData: Data) -> String {
+        store.saveChatImage(id: id, jpegData: jpegData)
+    }
+    
+    /// Loads chat image data for display (e.g. from message.attachmentImagePath).
+    func loadChatImageData(relativePath: String) -> Data? {
+        store.loadChatImageData(relativePath: relativePath)
+    }
+    
     func addUserChallenge(_ challenge: String) {
         if !userChallenges.contains(challenge) {
             userChallenges.append(challenge)
@@ -84,6 +94,14 @@ final class AppState: ObservableObject {
 
     func removeFoodEntry(id: String) {
         foodEntries.removeAll { $0.id == id }
+        save()
+    }
+
+    func updateFoodEntry(id: String, name: String, calories: Double, proteinGrams: Double) {
+        guard let idx = foodEntries.firstIndex(where: { $0.id == id }) else { return }
+        foodEntries[idx].name = name
+        foodEntries[idx].calories = calories
+        foodEntries[idx].proteinGrams = proteinGrams
         save()
     }
 

@@ -87,7 +87,7 @@ struct SupportChatView: View {
     
     private static let defaultPhotoCaption = "Can you estimate the calories and give me feedback?"
     
-    private func compressAndEncodeImage(_ image: UIImage) -> String? {
+    private func compressAndEncodeImageToData(_ image: UIImage) -> Data? {
         let maxSide: CGFloat = 1024
         let scale = min(maxSide / image.size.width, maxSide / image.size.height, 1)
         let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
@@ -95,8 +95,11 @@ struct SupportChatView: View {
         image.draw(in: CGRect(origin: .zero, size: newSize))
         let resized = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        guard let jpeg = resized?.jpegData(compressionQuality: 0.75) else { return nil }
-        return jpeg.base64EncodedString()
+        return resized?.jpegData(compressionQuality: 0.75)
+    }
+
+    private func compressAndEncodeImage(_ image: UIImage) -> String? {
+        compressAndEncodeImageToData(image)?.base64EncodedString()
     }
     
     private var welcomeBubble: some View {
@@ -169,11 +172,18 @@ struct SupportChatView: View {
         let caption = text.isEmpty && hasImage ? Self.defaultPhotoCaption : text
         guard !caption.isEmpty else { return }
 
-        let userMsg = ChatMessage(role: .user, content: caption)
-        appState.addChatMessage(userMsg)
         let imageToSend = pendingImage
         pendingImage = nil
         inputText = ""
+
+        let messageId = UUID()
+        var attachmentPath: String?
+        if let image = imageToSend,
+           let jpegData = compressAndEncodeImageToData(image) {
+            attachmentPath = appState.saveChatImage(id: messageId, jpegData: jpegData)
+        }
+        let userMsg = ChatMessage(id: messageId, role: .user, content: caption, attachmentImagePath: attachmentPath)
+        appState.addChatMessage(userMsg)
         isSending = true
 
         Task {
@@ -241,16 +251,40 @@ struct ChatBubbleView: View {
             if message.role == .user { Spacer(minLength: 48) }
             if message.role == .assistant, let parsed = FoodLogParse.parse(message.content) {
                 assistantBubbleWithFoodLog(displayText: parsed.displayText, items: parsed.items)
+            } else if message.role == .user {
+                userBubble
             } else {
                 Text(message.content)
                     .font(.subheadline)
                     .padding(12)
-                    .background(message.role == .user ? Color.accentColor : Color(.secondarySystemBackground))
-                    .foregroundColor(message.role == .user ? .white : .primary)
+                    .background(Color(.secondarySystemBackground))
+                    .foregroundColor(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             if message.role == .assistant { Spacer(minLength: 48) }
         }
+    }
+
+    private var userBubble: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let path = message.attachmentImagePath,
+               let data = appState.loadChatImageData(relativePath: path),
+               let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 220, maxHeight: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            if !message.content.isEmpty {
+                Text(message.content)
+                    .font(.subheadline)
+            }
+        }
+        .padding(12)
+        .background(Color.accentColor)
+        .foregroundColor(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func assistantBubbleWithFoodLog(displayText: String, items: [FoodLogItem]) -> some View {
@@ -273,7 +307,9 @@ struct ChatBubbleView: View {
 
     private func addFoodButton(messageId: String, index: Int, item: FoodLogItem) -> some View {
         let applied = appState.isFoodLogSuggestionApplied(messageId: messageId, itemIndex: index)
-        let buttonTitle = applied ? "Added" : "Add \(item.name) – \(Int(item.calories)) cal"
+        let qty = item.quantity?.trimmingCharacters(in: .whitespaces) ?? ""
+        let detail = qty.isEmpty ? "\(Int(item.calories)) cal" : "\(Int(item.calories)) cal (\(qty))"
+        let buttonTitle = applied ? "Added" : "Add \(item.name) – \(detail)"
         return Button {
             guard !applied else { return }
             appState.applyFoodLogSuggestion(
